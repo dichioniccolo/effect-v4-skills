@@ -21,7 +21,7 @@ Use `ServiceMap.Service<Self, Shape>()(identityKey)`. Note: type params FIRST, t
 import { Effect, ServiceMap, Layer } from "effect"
 
 // WHY: Class syntax gives you a nominal type (Self) + the service shape in one declaration.
-// The $I template tag produces a branded IdentityString under the file-local path.
+// The service identity key is a string literal.
 class Notifications extends ServiceMap.Service<Notifications, {
   readonly notify: (msg: string) => Effect.Effect<void>
 }>()("Notifications") {}

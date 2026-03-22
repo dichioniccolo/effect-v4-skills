@@ -25,7 +25,7 @@ Before writing code, run this checklist:
 6. Am I defining services? Use `ServiceMap.Service` + `Layer` + Identity composer.
 7. Am I defining object schemas? Prefer `S.Class` (avoid `S.Struct` by default).
 8. For non-class schemas, did I export the runtime type alias with the same identifier name?
-9. Did I annotate schemas with canonical `$I.annote(...)` metadata?
+9. Did I annotate schemas with canonical `Schema.annotate(...)` metadata?
 10. Is this a discriminated union or literal-union schema? Prefer `LiteralKit` + `.mapMembers` + `Tuple.evolve` + `S.toTaggedUnion` (or `S.TaggedUnion` for `_tag` cases).
 11. Is this a reusable function returning an `Effect`? Use named `Effect.fn("Namespace.name")` or `Effect.fnUntraced`.
 12. Is this a zero-arg effect value rather than a reusable function? Prefer `Effect.gen(...).pipe(Effect.withSpan("Name"))` over immediate `Effect.fn` IIFEs.
@@ -88,8 +88,7 @@ Before writing code, run this checklist:
 11. Do not suffix schema constants with `Schema`; use the domain name.
 12. For non-class schemas, export runtime type aliases with the same name: `export type X = typeof X.Type`.
 13. Do not use native `switch`; use `Match`. For empty/non-empty array branching, prefer `A.match` over manual length checks.
-14. All new schemas must be meaningfully annotated with `$I.annote("Name", { description })`.
-15. Service identifiers must use package composer `.create(...)` and `$I\`MyService\``.
+14. All new schemas must be meaningfully annotated with `Schema.annotate(...)`.
 16. If a schema has properties that are a union of literal strings, it should be a tagged union composed via `LiteralKit`, `.mapMembers`, and `Tuple.evolve`, then finalized with `S.toTaggedUnion`. Use `S.TaggedUnion` only for canonical `_tag` object-union construction.
 17. Reusable functions returning `Effect` should use named `Effect.fn("Namespace.name")` (or `Effect.fnUntraced` for hot/internal paths). Zero-arg effect values may stay `Effect.gen(...).pipe(Effect.withSpan("Name"))` when there is no exported/reused function to expose.
 18. Effect workflows should be observable with spans and structured logs from the start; add metrics (`effect/Metric` + `Effect.track*`) where the path is important enough to measure.
@@ -218,32 +217,28 @@ const TopicKind = S.Literals(["plain", "scoped"])
 
 const ContainsScopeSeparator = S.String.check(
   S.isIncludes(":", {
-    identifier: $I`ContainsScopeSeparatorCheck`,
+    identifier: "ContainsScopeSeparatorCheck",
     title: "Contains Scope Separator",
     description: "A string that contains `:`.",
     message: "Topic text must contain :"
   })
 ).pipe(
   S.brand("ContainsScopeSeparator"),
-  S.annotate($I.annote("ContainsScopeSeparator", {
-    description: "A string containing the topic scope separator `:`."
-  }))
+  S.annotate(...)
 )
 
 const isContainsScopeSeparator = S.is(ContainsScopeSeparator)
 
 const TopicSegment = S.NonEmptyString.check(
   S.makeFilter(P.not(isContainsScopeSeparator), {
-    identifier: $I`TopicSegmentNoSeparatorCheck`,
+    identifier: "TopicSegmentNoSeparatorCheck",
     title: "Topic Segment No Separator",
     description: "A topic segment that does not contain `:`.",
     message: "Topic segments must not contain :"
   })
 ).pipe(
   S.brand("TopicSegment"),
-  S.annotate($I.annote("TopicSegment", {
-    description: "A non-empty topic segment without the scope separator."
-  }))
+  S.annotate(...)
 )
 
 const isTopicSegment = S.is(TopicSegment)
@@ -262,7 +257,7 @@ export const TopicName = S.NonEmptyString.check(
   S.makeFilterGroup(
     [
       S.makeFilter(P.not(Str.endsWith(":")), {
-        identifier: $I`TopicNameNoTrailingSeparatorCheck`,
+        identifier: "TopicNameNoTrailingSeparatorCheck",
         title: "Topic Name No Trailing Separator",
         description: "A topic name that does not end with `:`.",
         message: "Topic names must not end with :"
@@ -276,23 +271,21 @@ export const TopicName = S.NonEmptyString.check(
             scoped: () => pipe(value, splitNonEmpty(":"), A.every(isTopicSegment))
           })
         ), {
-        identifier: $I`TopicNameSegmentsCheck`,
+        identifier: "TopicNameSegmentsCheck",
         title: "Topic Name Segments",
         description: "A topic name whose segments are valid topic segments.",
         message: "Topic names must contain only valid segments"
       })
     ],
     {
-      identifier: $I`TopicNameChecks`,
+      identifier: "TopicNameChecks",
       title: "Topic Name",
       description: "Checks for a plain or scoped topic name."
     })
   )
 ).pipe(
   S.brand("TopicName"),
-  S.annotate($I.annote("TopicName", {
-    description: "A topic name composed from valid plain or scoped segments."
-  }))
+  S.annotate(...)
 )
 ```
 
